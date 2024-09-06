@@ -22,25 +22,34 @@ class mlog:
 
 
 
-    def terminal(self, txt="."):
+    # print in terminal
+    def __rshift__(self, txt):
         if not self.allow_terminal:
             if self.raise_access_error:
-                raise PermissionError("terminal output is not allowed")
+                raise PermissionError(f"terminal is not accessable in mlog")
+
         _txt = self._txt_pre_process(txt)
-        print(_txt)
+        print(txt)
 
-
+    # print in file
     def __lshift__(self, txt):
-        _txt = self._txt_pre_process(txt)        
+        if self.force_terminal:
+            self >> txt
+        _txt = self._txt_pre_process(txt)
         self.file.write(_txt)
         self.file.flush()
 
 
+
+    def terminal(self, txt="."):
+        self >> txt
+
     def print(self, txt=".", terminal=True):
-        if terminal
+        if terminal:
+            self >> txt
         self << txt
     
-
     def println(self, txt=".", terminal=True):
-        self << f"{txt}\n"
+        _txt = txt + "\n"
+        self.print(_txt, terminal)
 
