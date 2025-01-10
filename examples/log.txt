@@ -1,5 +1,0 @@
-[Sun Nov 24 05:35:50 2024] [LOG] >> log text
-[Sun Nov 24 05:35:50 2024] [WARNING] >> warning text
-[Sun Nov 24 05:35:50 2024] [ERROR] >> error text
-[Sun Nov 24 05:35:50 2024] [LOG] >> log with forced terminal
-[Sun Nov 24 05:35:50 2024] [ERROR] >> error text without terminal print

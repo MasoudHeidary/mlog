@@ -1,3 +1,3 @@
-from .core import mLog, mLogLevel
+from .core import Log, LogLevel, AsyncLog
 
-__all__ = ['mLog', 'mLogLevel']
+__all__ = ['Log', 'LogLevel', 'AsyncLog']
