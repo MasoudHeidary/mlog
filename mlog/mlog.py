@@ -1,7 +1,7 @@
 import time
 from enum import Enum
 
-class mlog_level(Enum):
+class mLogLevel(Enum):
     LOG = 0
     WARNING = 1
     SUCCESS = 2
@@ -18,11 +18,8 @@ class mlog_level(Enum):
         return self.name
 
 
-def text_formatter(txt: str, level: mlog_level):
-    return f"[{time.asctime()}] [{str(level)}] >> {txt}"
 
-
-class mlog:
+class mLog:
 
     def __init__(
             self, 
@@ -30,14 +27,12 @@ class mlog:
             allow_terminal=True, 
             force_terminal=False, 
             raise_access_error=False,
-            text_formatter = text_formatter
             ):
         
         self.name = name
         self.allow_terminal = allow_terminal
         self.force_terminal = force_terminal
         self.raise_access_error = raise_access_error
-        self.text_formatter = text_formatter
 
         self.file = open(self.name, "a")
     
@@ -45,7 +40,10 @@ class mlog:
         self.file.flush()
         self.file.close()
 
-
+    
+    def text_formatter(self, txt:str, level:mLogLevel):
+        return f"[{time.asctime()}] [{str(level)}] >> {txt}"
+ 
 
     # print in terminal
     def __rshift__(self, txt):
@@ -64,31 +62,30 @@ class mlog:
         self.file.flush()
 
 
-
     # direct print in terminal
     def terminal(self, txt):
         self >> txt
 
     # direct print in file
-    def print(self, txt=".", level=mlog_level.LOG, terminal=True):
+    def print(self, txt=".", level=mLogLevel.LOG, terminal=True):
         txt = self.text_formatter(txt, level=level)
         if terminal:
             self >> txt
         self << txt
     
     # direct print in file + new line
-    def println(self, txt=".", level=mlog_level.LOG, terminal=True):
+    def println(self, txt=".", level=mLogLevel.LOG, terminal=True):
         _txt = txt + "\n"
         self.print(_txt, level=level, terminal=terminal)
 
 
     def log(self, txt, terminal=False):
-        self.println(txt=txt, level=mlog_level.LOG, terminal=terminal)
+        self.println(txt=txt, level=mLogLevel.LOG, terminal=terminal)
     
     def warning(self, txt, terminal=True):
-        self.println(txt=txt, level=mlog_level.WARNING, terminal=terminal)
+        self.println(txt=txt, level=mLogLevel.WARNING, terminal=terminal)
         
     def error(self, txt, terminal=True):
-        self.println(txt=txt, level=mlog_level.ERROR, terminal=terminal)
+        self.println(txt=txt, level=mLogLevel.ERROR, terminal=terminal)
     
 
