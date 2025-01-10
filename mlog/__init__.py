@@ -1,3 +1,3 @@
-from .mlog import mLog, mLogLevel
+from .core import mLog, mLogLevel
 
 __all__ = ['mLog', 'mLogLevel']

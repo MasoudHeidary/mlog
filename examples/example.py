@@ -1,5 +1,5 @@
 
-from mlog.mlog import mlog
+from mlog.core import mlog
 
 
 log_file_name = "log.txt"
