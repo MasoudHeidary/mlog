@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="mlog",
-    version="0.2.2",
+    version="1.0.0",
     author="Masoud Heidary",
     author_email="Masoud.Hei.dev@gmail.com",
     description="A simple log library",
