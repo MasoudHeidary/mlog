@@ -1,6 +1,11 @@
 # mlog Readme
 lightweight and flexible logging library for Python
 
+# TODO:
+- queue logging
+- multi thread logging
+- async logging
+
 ## install mlog
 ```console
 pip install ./mlog
