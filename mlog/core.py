@@ -1,6 +1,8 @@
 import time
 from enum import Enum
 import asyncio
+from queue import Queue
+from threading import Thread
 
 class LogLevel(Enum):
     LOG = 0
@@ -90,6 +92,55 @@ class Log:
         self.println(txt=txt, level=LogLevel.ERROR, terminal=terminal)
     
 
+
+class QuoteLog():
+    def __init__(
+            self,
+            filename,
+            allow_terminal=True,
+            raise_access_error=False,
+        ):
+        self.filename = filename
+        self.allow_terminal = allow_terminal
+        self.raise_access_error = raise_access_error
+        
+        self.file_queue = Queue()
+        self._running = True
+        self._write_thread = Thread(target=self._file_writer, daemon=True)
+        self._write_thread.start()
+        
+    def __del__(self):
+        self._running = False
+        self._write_thread.join()
+        self._flush()
+        
+    def _file_writer(self):
+        with open(self.filename, "a") as file:
+            while self._running or not self.file_queue.empty():
+                try:
+                    line = self.file_queue.get(timeout=0.1)
+                    file.write(line)
+                    file.flush()
+                except:
+                    pass
+    
+    def _flush(self):
+        with open(self.filename, "a") as file:
+            while not self.file_queue.empty():
+                file.write(self.file_queue.get())
+    
+    def text_formatter(self, txt: str, level: LogLevel):
+        return f"[{time.asctime()}] [{str(level)}] >> {txt}"
+    
+    def println(self, txt, level=LogLevel.LOG, terminal=True):
+        txt = txt + "\n"
+        self.print(txt, level, terminal)
+    
+    def print(self, txt, level=LogLevel.LOG, terminal=True):
+        txt = self.text_formatter(txt, level)
+        if terminal:
+            print(txt, end='')
+        self.file_queue.put(txt)
 
 
 class AsyncLog():
