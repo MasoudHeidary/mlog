@@ -68,12 +68,12 @@ class Log:
         elif self.raise_access_error:
             raise PermissionError(f"log file if not accessable in mlog")
 
-    def ln(self, char=' ', terminal=True):
+    def ln(self, level=LogLevel.INF, terminal=True, char=' ', line_width=40,):
         """print a emprty line for readability"""
         if terminal or self.force_terminal:
-            self.terminal_rprint(char*40)
+            self.terminal_rprint(char*line_width + '\n')
         if self.file:
-            self.file_rprint(char*40)
+            self.file_rprint(char*line_width + '\n')
 
     def log(self, txt, level=LogLevel.INF, terminal=True):
         txt = self.text_formatter(txt + '\n', level=level)

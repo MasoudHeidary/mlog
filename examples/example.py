@@ -15,6 +15,7 @@ log.error("error level log")
 
 from mlog import LogLevel
 
+log.ln()
 log.log("manual debug level log", level=LogLevel.DBG)
 
 del log
