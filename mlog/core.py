@@ -14,29 +14,33 @@ class DefaultLogLevel(Enum):
 
     def __str__(self):
         return self.name
+    
+    def __lt__(self, other):
+        if isinstance(other, DefaultLogLevel):
+            return self.value < other.value
+        return NotImplemented
+    
+    def __eq__(self, other):
+        if isinstance(other, DefaultLogLevel):
+            return self.value == other.value
+        return NotImplemented
 
+# TODO:modifyable log level
 LogLevel = DefaultLogLevel
-
-# TODO:
-def extend_level(new_levels):
-    """extend levels with {'new_level': new_value}"""
-    pass
-
-
 
 class Log:
 
     def __init__(
             self, 
             filename        = False, 
-            log_lst         = True,
+            min_log_level   = LogLevel.DBG,
             allow_terminal  = True, 
             force_terminal  = False, 
             raise_access_error  = True,
             ):
         
         self.filename = filename
-        self.log_lst = log_lst
+        self.min_log_level = min_log_level
         self.allow_terminal = allow_terminal
         self.force_terminal = force_terminal
         self.raise_access_error = raise_access_error
@@ -68,20 +72,23 @@ class Log:
         elif self.raise_access_error:
             raise PermissionError(f"log file if not accessable in mlog")
 
-    def ln(self, level=LogLevel.INF, terminal=True, char=' ', line_width=40,):
-        """print a emprty line for readability"""
-        if terminal or self.force_terminal:
-            self.terminal_rprint(char*line_width + '\n')
-        if self.file:
-            self.file_rprint(char*line_width + '\n')
-
-    def log(self, txt, level=LogLevel.INF, terminal=True):
-        txt = self.text_formatter(txt + '\n', level=level)
+    def __log(self, txt, level, terminal):
+        if level < self.min_log_level:
+            return
+        
         if terminal or self.force_terminal:
             self.terminal_rprint(txt)
         if self.file:
             self.file_rprint(txt)
-    
+
+    def ln(self, level=LogLevel.INF, terminal=True, char=' ', line_width=40,):
+        """print a emprty line for readability"""
+        txt = char * line_width + '\n'
+        self.__log(txt, level, terminal)
+
+    def log(self, txt, level=LogLevel.INF, terminal=True):
+        txt = self.text_formatter(txt + '\n', level=level)
+        self.__log(txt, level, terminal)
 
     def debug(self, txt, terminal=True):
         self.log(txt, level=LogLevel.DBG, terminal=terminal)
