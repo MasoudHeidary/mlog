@@ -1,4 +1,0 @@
-
-save configuration in a json file and be able to reload the configuration with a function
-
-log be in different levels, like DEBUG, WARNING, ERROR
