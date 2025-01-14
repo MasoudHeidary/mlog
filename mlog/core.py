@@ -4,23 +4,22 @@ import asyncio
 from queue import Queue
 from threading import Thread
 
-class LogLevel(Enum):
-    LOG = 0
-    WARNING = 1
-    SUCCESS = 2
-    ERROR = 3
-    
-    # more detailed logging [optional]
-    INFO = 100
-    DEBUG = 101
-    TRACE = 102
-    CRITICAL = 103
-    FATAL =104
+class DefaultLevel(Enum):
+    SUC = 0         # success
+    WAR = 1         # warning
+    ERR = 2         # error
+    INF = 3       # info
+    DBG = 4       # debug
 
     def __str__(self):
         return self.name
 
+Level = DefaultLevel
 
+# TODO:
+def extend_level(new_levels):
+    """extend levels with {'new_level': new_value}"""
+    pass
 
 class Log:
 
