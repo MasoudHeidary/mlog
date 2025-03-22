@@ -3,6 +3,7 @@ from enum import Enum
 import asyncio
 from queue import Queue
 from threading import Thread
+import sys
 
 
 class DefaultLogLevel(Enum):
@@ -100,6 +101,56 @@ class Log:
         self.log(txt, level=LogLevel.ERR, terminal=terminal)
     
 
+class Progress:
+    def __init__(self, max_lst, labels=False, bars=1, char_ln=25):
+        self.max_lst = max_lst
+        self.labels = labels
+        self.bars = bars
+        self.char_ln = char_ln
+        self.values = [0 for _ in range(self.bars)]
+
+        self.__print_all_bars()
+    
+    @staticmethod
+    def move_cursor_up(n):
+        sys.stdout.write(f"\033[{n}F")
+        sys.stdout.flush()
+        return n
+    
+    @staticmethod
+    def move_cursor_down(n):
+        sys.stdout.write(f"\033[{n}E")
+        sys.stdout.flush()
+        return n
+    
+    def __update_one_line(self, index):
+        row = self.bars - index
+        self.move_cursor_up(row)
+        self.__print_bar(index)
+        self.move_cursor_down(row)
+
+    def __print_bar(self, index):
+        try:
+            label = self.labels[index]
+        except:
+            label = "#N"
+
+        bar_fill = int(self.values[index] / (self.max_lst[index] - 1) * self.char_ln)
+        bar = "█" * bar_fill + "-" * (self.char_ln-bar_fill)
+
+        per = f"{self.values[index] / (self.max_lst[index] - 1) * 100 : .2f}"
+
+        print(f"{label}\t|{bar}|\t{per}%")
+
+    def __print_all_bars(self):
+        for index in range(self.bars):
+            self.__print_bar(index)
+    
+    def update(self, index, value):
+        if (value < 0) or (value > self.max_lst[index]):
+            raise ValueError(f"negative or bigger than max limit [{self.max_lst[index]}] value")
+        self.values[index] = value
+        self.__update_one_line(index)
 
 
 
