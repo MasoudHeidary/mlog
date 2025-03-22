@@ -152,7 +152,20 @@ class Progress:
         for index in range(self.bars):
             self.__print_bar(index)
     
-    def update(self, index, value, outof):
+    def label_to_index(self, label):
+        if not self.labels:
+            raise LookupError("labels is not defined")
+        for index, l in enumerate(self.labels):
+            if l == label:
+                return index
+        raise LookupError("label not found")
+
+    def update(self, index_label, value, outof):
+        if isinstance(index_label, str):
+            index = self.label_to_index(index_label)
+        else:
+            index = index_label
+
         per = (value + 1) / outof
         if (per < 0) or (per > 1):
             raise ValueError(f"invalid value: percentage should be in range of 0-1")
