@@ -43,3 +43,14 @@ log.debug("debug message")
 log.log("log message")
 log.warning("warning message")
 log.error("error message")
+
+
+from mlog import Progress
+from time import sleep
+progress = Progress(max_lst=[34, 100], labels=["i", "j"], bars=2)
+
+for i in range(34):
+    progress.update(0, i)
+    for j in range(100):
+        progress.update(1, j)
+        sleep(0.0001)
