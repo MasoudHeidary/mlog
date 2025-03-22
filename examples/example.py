@@ -47,10 +47,13 @@ log.error("error message")
 
 from mlog import Progress
 from time import sleep
-progress = Progress(max_lst=[34, 100], labels=["i", "j"], bars=2)
 
-for i in range(34):
-    progress.update(0, i)
-    for j in range(100):
-        progress.update(1, j)
+i_max = 34
+j_max = 1000
+
+progress = Progress(bars=2, labels=["i", "j"])
+for i in range(i_max):
+    progress.update(0, i, i_max)
+    for j in range(j_max):
+        progress.update(1, j, j_max)
         sleep(0.0001)

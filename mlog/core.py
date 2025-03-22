@@ -102,12 +102,11 @@ class Log:
     
 
 class Progress:
-    def __init__(self, max_lst, labels=False, bars=1, char_ln=25):
-        self.max_lst = max_lst
+    def __init__(self, bars=1, labels=False, char_ln=25):
         self.labels = labels
-        self.bars = bars
         self.char_ln = char_ln
-        self.values = [0 for _ in range(self.bars)]
+        self.bars = bars
+        self.per_lst = [0 for _ in range(bars)]
 
         self.__print_all_bars()
     
@@ -131,25 +130,26 @@ class Progress:
 
     def __print_bar(self, index):
         try:
-            label = self.labels[index]
+            label = f"{self.labels[index]}\t"
         except:
             label = "#N"
 
-        bar_fill = int(self.values[index] / (self.max_lst[index] - 1) * self.char_ln)
+        bar_fill = int(self.per_lst[index] * self.char_ln)
         bar = "█" * bar_fill + "-" * (self.char_ln-bar_fill)
 
-        per = f"{self.values[index] / (self.max_lst[index] - 1) * 100 : .2f}"
+        per = f"{self.per_lst[index] * 100 : .2f}"
 
-        print(f"{label}\t|{bar}|\t{per}%")
+        print(f"{label}|{bar}|{per}%")
 
     def __print_all_bars(self):
         for index in range(self.bars):
             self.__print_bar(index)
     
-    def update(self, index, value):
-        if (value < 0) or (value > self.max_lst[index]):
-            raise ValueError(f"negative or bigger than max limit [{self.max_lst[index]}] value")
-        self.values[index] = value
+    def update(self, index, value, outof):
+        per = (value + 1) / outof
+        if (per < 0) or (per > 1):
+            raise ValueError(f"invalid value: percentage should be in range of 0-1")
+        self.per_lst[index] = per
         self.__update_one_line(index)
 
 
