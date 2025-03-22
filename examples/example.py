@@ -51,7 +51,9 @@ from time import sleep
 i_max = 34
 j_max = 1000
 
-progress = Progress(bars=2, labels=["i", "j"])
+# progress = Progress(bars=2, labels=["i", "j"])
+# progress = Progress(bars=2)
+progress = Progress(labels=["i", "j"])
 for i in range(i_max):
     progress.update(0, i, i_max)
     for j in range(j_max):

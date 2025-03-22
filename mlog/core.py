@@ -102,14 +102,21 @@ class Log:
     
 
 class Progress:
-    def __init__(self, bars=1, labels=False, char_ln=25):
+    def __init__(self, bars=False, labels=False, char_ln=25):
+        if (bars and labels) and (len(labels) != bars):
+            raise IndexError("label length and bars is different")
+
+        if labels:
+            self.bars = len(labels)
+        else:
+            self.bars = bars
+        
         self.labels = labels
         self.char_ln = char_ln
-        self.bars = bars
-        self.per_lst = [0 for _ in range(bars)]
 
+        self.per_lst = [0 for _ in range(self.bars)]
         self.__print_all_bars()
-    
+
     @staticmethod
     def move_cursor_up(n):
         sys.stdout.write(f"\033[{n}F")
