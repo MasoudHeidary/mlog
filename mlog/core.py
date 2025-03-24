@@ -4,6 +4,7 @@ import asyncio
 from queue import Queue
 from threading import Thread
 import sys
+from warnings import warn
 
 
 class DefaultLogLevel(Enum):
@@ -29,6 +30,29 @@ class DefaultLogLevel(Enum):
 # TODO:modifyable log level
 LogLevel = DefaultLogLevel
 
+
+class ProgressBar:
+    def __init__(self, label, char_ln=20):
+        self.label = label
+        self.char_ln = char_ln
+        self.value = 0
+    
+    def print_bar(self):
+        label = self.label if self.label else "no_label"
+        bar_fill = int(self.value * self.char_ln)
+        bar = "█" * bar_fill + "-" * (self.char_ln-bar_fill)
+        per = f"{self.value * 100 : .2f}%"
+        
+        print(f"{label}|{bar}|{per}")
+        
+    def update(self, fraction):
+        if not (0 <= fraction <= 1):
+            raise ValueError(f"fraction is not valid")
+        self.value = fraction
+
+
+
+
 class Log:
 
     def __init__(
@@ -45,9 +69,14 @@ class Log:
         self.allow_terminal = allow_terminal
         self.force_terminal = force_terminal
         self.raise_access_error = raise_access_error
-
+        
+        self.bars = []
+        self.bar_topline = 100
+        
         self.file = open(self.filename, "a") if self.filename else False
-    
+
+        
+        
     def __del__(self):
         self.file.flush()
         self.file.close()
@@ -59,7 +88,14 @@ class Log:
     def terminal_rprint(self, txt):
         """raw print in terminal"""
         if self.allow_terminal:
+            # overwrite progress bars, or write new text
+            pos = len(self.bars) - self.bar_topline
+
+            self.move_cursor_up(pos)
             print(txt, end='')
+            self.move_cursor_down(pos)
+            self.bar_topline += 1
+        
         elif self.raise_access_error:
                 raise PermissionError(f"terminal is not accessable in mlog")
     
@@ -88,6 +124,8 @@ class Log:
         self.__log(txt, level, terminal)
 
     def log(self, txt, level=LogLevel.INF, terminal=True):
+        if "\n" in txt:
+            warn("\\n charcter in string is not recommended, use ln() function")
         txt = self.text_formatter(txt + '\n', level=level)
         self.__log(txt, level, terminal)
 
@@ -99,82 +137,59 @@ class Log:
         
     def error(self, txt, terminal=True):
         self.log(txt, level=LogLevel.ERR, terminal=terminal)
+
     
-
-class Progress:
-    def __init__(self, bars=False, labels=False, char_ln=25):
-        if (bars and labels) and (len(labels) != bars):
-            raise IndexError("label length and bars is different")
-
-        if labels:
-            self.bars = len(labels)
-        else:
-            self.bars = bars
-        
-        self.labels = labels
-        self.char_ln = char_ln
-
-        self.per_lst = [0 for _ in range(self.bars)]
-        self.__print_all_bars()
-
+    # terminal cursor management
     @staticmethod
     def move_cursor_up(n):
+        if n <= 0:
+            return 0
         sys.stdout.write(f"\033[{n}F")
         sys.stdout.flush()
         return n
     
     @staticmethod
     def move_cursor_down(n):
+        if n <= 0:
+            return 0
         sys.stdout.write(f"\033[{n}E")
         sys.stdout.flush()
         return n
     
-    def __update_one_line(self, index):
-        row = self.bars - index
-        self.move_cursor_up(row)
-        self.__print_bar(index)
-        self.move_cursor_down(row)
-
-    def __print_bar(self, index):
-        try:
-            label = f"{self.labels[index]}\t"
-        except:
-            label = "#N"
-
-        bar_fill = int(self.per_lst[index] * self.char_ln)
-        bar = "█" * bar_fill + "-" * (self.char_ln-bar_fill)
-
-        per = f"{self.per_lst[index] * 100 : .2f}"
-
-        print(f"{label}|{bar}|{per}%")
-
-    def __print_all_bars(self):
-        for index in range(self.bars):
-            self.__print_bar(index)
+    # progress bar management
+    def create_bar(self, label):
+        self.bars.append(ProgressBar(label=label))
     
-    def label_to_index(self, label):
-        if not self.labels:
-            raise LookupError("labels is not defined")
-        for index, l in enumerate(self.labels):
-            if l == label:
-                return index
-        raise LookupError("label not found")
+    def update_bar(self, label, frac):
+        i = self.__label_to_index(label)
+        self.bars[i].update(frac)
+        self.__print_bars()
+    
+    def close_bar(self, label):
+        i = self.__label_to_index(label)
+        del self.bars[i]
+    
+    def __label_to_index(self, label):
+        for i, bar in enumerate(self.bars):
+            if bar.label == label:
+                return i
+        raise LookupError(f"{label} label not found")
+    
+    def __print_bars(self):
+        for i, bar in enumerate(self.bars):
+            """overwrite any present bars, or print new bars?"""
+            # if len(self.bars) - self.bar_topline > 0:
+            #     move = len(self.bars) - self.bar_topline - i
+            # else:
+            #     move = 0
+            pos = len(self.bars) - self.bar_topline - i
+            
 
-    def update(self, index_label, value, outof):
-        if isinstance(index_label, str):
-            index = self.label_to_index(index_label)
-        else:
-            index = index_label
-
-        per = (value + 1) / outof
-        if (per < 0) or (per > 1):
-            raise ValueError(f"invalid value: percentage should be in range of 0-1")
-        self.per_lst[index] = per
-        self.__update_one_line(index)
-
-
-
-
+            self.move_cursor_up(pos)
+            bar.print_bar()
+            self.move_cursor_down(pos)
+        self.bar_topline = 0
+    
 
 
 
