@@ -3,6 +3,8 @@ from enum import Enum
 import asyncio
 from queue import Queue
 from threading import Thread
+import sys
+from warnings import warn
 
 
 class DefaultLogLevel(Enum):
@@ -28,6 +30,29 @@ class DefaultLogLevel(Enum):
 # TODO:modifyable log level
 LogLevel = DefaultLogLevel
 
+
+class ProgressBar:
+    def __init__(self, label, char_ln=20):
+        self.label = label
+        self.char_ln = char_ln
+        self.value = 0
+    
+    def print_bar(self):
+        label = self.label if self.label else "no_label"
+        bar_fill = int(self.value * self.char_ln)
+        bar = "█" * bar_fill + "-" * (self.char_ln-bar_fill)
+        per = f"{self.value * 100 : .2f}%"
+        
+        print(f"{label}|{bar}|{per}")
+        
+    def update(self, fraction):
+        if not (0 <= fraction <= 1):
+            raise ValueError(f"fraction is not valid")
+        self.value = fraction
+
+
+
+
 class Log:
 
     def __init__(
@@ -44,9 +69,14 @@ class Log:
         self.allow_terminal = allow_terminal
         self.force_terminal = force_terminal
         self.raise_access_error = raise_access_error
-
+        
+        self.bars = []
+        self.bar_topline = 100
+        
         self.file = open(self.filename, "a") if self.filename else False
-    
+
+        
+        
     def __del__(self):
         self.file.flush()
         self.file.close()
@@ -58,7 +88,14 @@ class Log:
     def terminal_rprint(self, txt):
         """raw print in terminal"""
         if self.allow_terminal:
+            # overwrite progress bars, or write new text
+            pos = len(self.bars) - self.bar_topline
+
+            self.move_cursor_up(pos)
             print(txt, end='')
+            self.move_cursor_down(pos)
+            self.bar_topline += 1
+        
         elif self.raise_access_error:
                 raise PermissionError(f"terminal is not accessable in mlog")
     
@@ -87,6 +124,8 @@ class Log:
         self.__log(txt, level, terminal)
 
     def log(self, txt, level=LogLevel.INF, terminal=True):
+        if "\n" in txt:
+            warn("\\n charcter in string is not recommended, use ln() function")
         txt = self.text_formatter(txt + '\n', level=level)
         self.__log(txt, level, terminal)
 
@@ -98,12 +137,59 @@ class Log:
         
     def error(self, txt, terminal=True):
         self.log(txt, level=LogLevel.ERR, terminal=terminal)
+
     
+    # terminal cursor management
+    @staticmethod
+    def move_cursor_up(n):
+        if n <= 0:
+            return 0
+        sys.stdout.write(f"\033[{n}F")
+        sys.stdout.flush()
+        return n
+    
+    @staticmethod
+    def move_cursor_down(n):
+        if n <= 0:
+            return 0
+        sys.stdout.write(f"\033[{n}E")
+        sys.stdout.flush()
+        return n
+    
+    # progress bar management
+    def create_bar(self, label):
+        self.bars.append(ProgressBar(label=label))
+    
+    def update_bar(self, label, frac):
+        i = self.__label_to_index(label)
+        self.bars[i].update(frac)
+        self.__print_bars()
+    
+    def close_bar(self, label):
+        i = self.__label_to_index(label)
+        del self.bars[i]
+    
+    def __label_to_index(self, label):
+        for i, bar in enumerate(self.bars):
+            if bar.label == label:
+                return i
+        raise LookupError(f"{label} label not found")
+    
+    def __print_bars(self):
+        for i, bar in enumerate(self.bars):
+            """overwrite any present bars, or print new bars?"""
+            # if len(self.bars) - self.bar_topline > 0:
+            #     move = len(self.bars) - self.bar_topline - i
+            # else:
+            #     move = 0
+            pos = len(self.bars) - self.bar_topline - i
+            
 
-
-
-
-
+            self.move_cursor_up(pos)
+            bar.print_bar()
+            self.move_cursor_down(pos)
+        self.bar_topline = 0
+    
 
 
 
