@@ -50,8 +50,10 @@ class ProgressBar:
 
 class Buffer:
     def __init__(self, size):
-        self.buffer = list()
+        if size <= 0:
+            raise ValueError("buffer size can not be zero or negative")
         self.size = size
+        self.buffer = list()
     
     def rappend(self, item):
         self.buffer.append(item)
@@ -68,6 +70,9 @@ class Buffer:
     
     def empty(self):
         self.buffer = []
+
+    def __iter__(self):
+        return iter(self.buffer)
 
 
 class Log:
@@ -89,8 +94,8 @@ class Log:
         self.force_terminal = force_terminal
         self.raise_access_error = raise_access_error
         
-        self.buffer_size = buffer_size
-        self.buffer = list()
+
+        self.buffer = Buffer(size=buffer_size) if buffer_size>0 else None
         
         self.bars = []
         self.bar_topline = 100
@@ -103,8 +108,14 @@ class Log:
         
         
     def __del__(self):
-        self.file.flush()
-        self.file.close()
+        if self.file:
+            if self.buffer:
+                for txt in self.buffer:
+                    self.file.write(txt)
+            self.file.flush()
+
+            self.buffer.empty()
+            self.file.close()
 
 
     def text_formatter(self, txt:str, level:LogLevel):
@@ -126,11 +137,20 @@ class Log:
     
     def file_rprint(self, txt):
         """raw print in file"""
-        # if self.force_terminal:
-            # self.terminal_rprint(txt)
         if self.file:
-            self.file.write(txt)
-            self.file.flush()
+            if self.buffer:
+                self.buffer.rappend(txt)
+
+                if self.buffer.is_full():
+                    for txt in self.buffer:
+                        self.file.write(txt)
+                    self.file.flush()
+                    self.buffer.empty()
+
+            else:
+                self.file.write(txt)
+                self.file.flush()
+
         elif self.raise_access_error:
             raise PermissionError(f"log file if not accessable in mlog")
 
