@@ -1,10 +1,7 @@
-import time
 from enum import Enum
-import asyncio
-from queue import Queue
-from threading import Thread
 import sys
 from warnings import warn
+import threading, queue, time
 
 
 class DefaultLogLevel(Enum):
@@ -51,6 +48,26 @@ class ProgressBar:
         self.value = fraction
 
 
+class Buffer:
+    def __init__(self, size):
+        self.buffer = list()
+        self.size = size
+    
+    def rappend(self, item):
+        self.buffer.append(item)
+
+    def append(self, item):
+        if len(self.buffer) < self.size:
+            self.rappend(item)
+    
+    def is_full(self):
+        return (len(self.buffer) >= self.size)
+    
+    def is_empty(self):
+        return (len(self.buffer) == 0)
+    
+    def empty(self):
+        self.buffer = []
 
 
 class Log:
@@ -62,6 +79,8 @@ class Log:
             allow_terminal  = True, 
             force_terminal  = False, 
             raise_access_error  = True,
+            buffer_size = 0,
+            threaded = False,   
             ):
         
         self.filename = filename
@@ -70,9 +89,15 @@ class Log:
         self.force_terminal = force_terminal
         self.raise_access_error = raise_access_error
         
+        self.buffer_size = buffer_size
+        self.buffer = list()
+        
         self.bars = []
         self.bar_topline = 100
         
+        if threaded:
+            pass
+
         self.file = open(self.filename, "a") if self.filename else False
 
         
